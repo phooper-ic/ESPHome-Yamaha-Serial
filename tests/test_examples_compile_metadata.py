@@ -12,6 +12,7 @@ EXAMPLES = [
     ROOT / "examples/yamaha_rx_v_basic.yaml",
     ROOT / "examples/yamaha_rx_v_full.yaml",
     ROOT / "examples/yamaha_rx_vx500.yaml",
+    ROOT / "examples/yamaha_rx_v1900.yaml",
 ]
 
 
@@ -207,6 +208,40 @@ def test_x500_example_uses_explicit_x500_profile_and_inputs() -> None:
         "extended_surround",
         "speaker_b_assignment",
         "zone2_amp",
+    ):
+        assert key in select_block
+
+    services = data["api"]["services"]
+    assert services[0]["service"] == "yamaha_raw_command"
+    assert services[0]["then"][0]["yamaha_serial.raw_command"]["id"] == "yamaha"
+
+
+def test_rx_v1900_example_uses_rx_v1900_profile_without_unsupported_entities() -> None:
+    data = yaml.load((ROOT / "examples/yamaha_rx_v1900.yaml").read_text(encoding="utf-8"), Loader=_SecretSafeLoader)
+
+    yamaha = data["yamaha_serial"]
+    assert yamaha["model"] == "RX-V1900"
+    assert yamaha["receiver_profile"] == "rx_v1900_extended"
+    assert yamaha["poll_interval"] == "never"
+    assert yamaha["allow_raw_commands"] is True
+    # The profile carries the verified RX-V1900 input labels; x500 overrides would undo them.
+    assert "inputs" not in yamaha
+
+    # RX-V1900 has no Speaker A/B relays, fan control or night mode.
+    switches = data["switch"][0]
+    for key in ("speaker_a", "speaker_b", "fan_mode"):
+        assert key not in switches
+    select_block = data["select"][0]
+    for key in ("night_mode", "speaker_b_assignment", "zone2_amp", "decoder_mode"):
+        assert key not in select_block
+    for key in (
+        "input_source",
+        "zone2_input_source",
+        "program",
+        "scene",
+        "tuner_band",
+        "extended_surround",
+        "surround_decoder",
     ):
         assert key in select_block
 

@@ -16,10 +16,13 @@ only the common STX command surface should be used.
 
 A profile is responsible for:
 
-- `ProfileCapabilities` flags
+- `ProfileCapabilities` flags, including `x700_protocol` for the x700+ report and
+  DC2 layout differences and `supports_decoder_mode` for the Auto/DTS/AAC decoder
+  commands; every base profile sets each flag explicitly, because nothing resets
+  them between profiles
 - main and Zone2 input mappings
 - DSP/program mappings
-- System Memory/scene mappings
+- System Memory/scene mappings, including their labels (A-F, or 1-6 on RX-V1900)
 - generation-specific command differences such as MD/TAPE or Pure Direct
 - whether DC2 offset decoding is valid
 - whether typed DC4 setup entities may send commands

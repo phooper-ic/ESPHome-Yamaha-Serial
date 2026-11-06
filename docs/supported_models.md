@@ -6,6 +6,7 @@
 | RX-V1600 | expected | `rx_vx600_extended` | `rx_vx600` | x600 input/program map with RX-V1600-practical standard controls; MD/TAPE main input uses `07A18`; DC4 setup controls and DC2 offset decode in extended profile. |
 | RX-V1700 | expected | `rx_vx700_extended` | `rx_vx700` | x700 input/program map with typed standard setup controls and extended raw transport. |
 | RX-V1800 | expected | `rx_vx800_extended` | `rx_vx800` | x800 input/program map with typed standard setup controls; Night Listening Mode disabled by profile. |
+| RX-V1900 | tested | `rx_v1900_extended` | `rx_v1900` | RX-V1900 input map (adds USB and DOCK) and DSP program map (no Disco, Game or THX). Checked on hardware: model detection (DC2 ID `R0240`), DC2 startup decode, input and program reports and select commands (main and Zone2), enhancer codes, playback format/sampling, tuner band, System Memory 1-6 (recall and remote reports), the 2ch surround decoder (`surround_decoder`) and bass/treble. Not supported: the Auto/DTS/AAC decoder mode (ignored by the receiver) and Zone3. Not yet validated: speaker distances. Example: [`examples/yamaha_rx_v1900.yaml`](../examples/yamaha_rx_v1900.yaml). |
 | RX-V2500 | expected | `rx_vx500_extended` | `rx_vx500` | x500 input/program map with typed standard setup controls; MD/TAPE main input uses `07AC9`; Pure Direct uses the RX-V2500 `07E82`/`07E83` pair. |
 | RX-V2600 | expected | `rx_vx600_extended` | `rx_vx600` | x600 input/program map with typed standard controls, DC4 setup controls, and DC2 offset decode in extended profile. |
 | RX-V2700 | expected | `rx_vx700_extended` | `rx_vx700` | x700 input/program map with typed standard setup controls and extended raw transport. |
@@ -32,6 +33,7 @@ Every supported model family has a standard and an extended profile:
 | RX-Vx600 | `rx_vx600` | `rx_vx600_extended` | `rx_vx600_extended` |
 | RX-Vx700 | `rx_vx700` | `rx_vx700_extended` | `rx_vx700_extended` |
 | RX-Vx800 | `rx_vx800` | `rx_vx800_extended` | `rx_vx800_extended` |
+| RX-V1900 | `rx_v1900` | `rx_v1900_extended` | `rx_v1900_extended` |
 
 Use a standard profile when you want the stable STX command surface only.
 Use an extended profile when you want the model-family extended command path
