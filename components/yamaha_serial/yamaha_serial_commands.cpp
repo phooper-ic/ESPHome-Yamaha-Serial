@@ -164,6 +164,11 @@ void YamahaSerialComponent::command_program(const std::string &label) {
     return;
   }
   const auto &program = this->programs_[idx.value()];
+  if (program.command.empty()) {
+    // Report-only program: decoded from receiver reports, no known select command.
+    this->set_last_error_("Program has no select command for this profile: " + program.label);
+    return;
+  }
   this->queue_simple_command_(FrameType::STX, program.command, "program_select");
 }
 
@@ -179,8 +184,14 @@ void YamahaSerialComponent::command_program_step(bool next) {
   } else {
     current = next ? this->programs_.size() - 1 : 0;
   }
-  const size_t target =
-      next ? (current + 1) % this->programs_.size() : (current + this->programs_.size() - 1) % this->programs_.size();
+  // Skip report-only programs (no select command) when stepping.
+  const size_t count = this->programs_.size();
+  size_t target = current;
+  for (size_t step = 0; step < count; step++) {
+    target = next ? (target + 1) % count : (target + count - 1) % count;
+    if (!this->programs_[target].command.empty())
+      break;
+  }
   this->command_program(this->programs_[target].label);
 }
 
@@ -382,9 +393,18 @@ void YamahaSerialComponent::command_sleep_timer(const std::string &label) {
     return;
   }
   this->queue_simple_command_(FrameType::STX, command, "sleep_timer_set");
+  if (this->profile_caps_.x700_protocol && std::strcmp(command, "07EB3") == 0) {
+    // x700+ (verified on RX-V1900) acknowledges Off with the previous sleep value,
+    // so read the configuration back to publish the real state.
+    this->queue_simple_command_(FrameType::DC1, "000", "sleep_off_readback");
+  }
 }
 
 void YamahaSerialComponent::command_decoder_mode(const std::string &label) {
+  if (!this->profile_caps_.supports_decoder_mode) {
+    this->set_last_error_("Decoder mode not supported by active profile");
+    return;
+  }
   const std::string key = normalize_token_(label);
   const char *command = lookup_command_(DECODER_MODE_COMMANDS, std::size(DECODER_MODE_COMMANDS), key);
   if (command == nullptr) {
@@ -426,6 +446,28 @@ void YamahaSerialComponent::command_zone2_amp(const std::string &label) {
     return;
   }
   this->queue_simple_command_(FrameType::STX, command, "zone2_amp_set");
+}
+
+void YamahaSerialComponent::command_surround_decoder(const std::string &label) {
+  if (!this->profile_caps_.x700_protocol) {
+    this->set_last_error_("Surround decoder not supported by active profile");
+    return;
+  }
+  const std::string key = normalize_token_(label);
+  const char *command = lookup_command_(SURROUND_DECODER_COMMANDS, std::size(SURROUND_DECODER_COMMANDS), key);
+  if (command == nullptr) {
+    this->set_last_error_("Surround decoder has no select command: " + label);
+    return;
+  }
+  // The receiver ignores decoder commands unless Surround Decode (report 0x2C) is active.
+  for (const auto &program : this->programs_) {
+    if (program.report_code == 0x2C && !program.command.empty()) {
+      if (this->program_label_ != program.label)
+        this->queue_simple_command_(FrameType::STX, program.command, "program_select");
+      break;
+    }
+  }
+  this->queue_simple_command_(FrameType::STX, command, "surround_decoder_set");
 }
 
 void YamahaSerialComponent::command_tuner_auto_seek(bool up) {

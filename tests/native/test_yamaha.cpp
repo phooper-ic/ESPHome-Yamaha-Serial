@@ -105,8 +105,10 @@ int main() {
     assert(model.inputs_.size() == input_count);
     assert(!main_input.has_option("Invalid") && !zone2_input.has_option("Invalid"));
     for (const auto &input : model.inputs_) {
-      assert(main_input.has_option(input.label) == !input.main_command.empty());
-      assert(zone2_input.has_option(input.label) == !input.zone2_command.empty());
+      // Report-only inputs (report ID, no command) are listed so the select follows the receiver.
+      assert(main_input.has_option(input.label) == (!input.main_command.empty() || input.report_id != 0xFF));
+      assert(zone2_input.has_option(input.label) ==
+             (!input.zone2_command.empty() || input.zone2_report_id != 0xFF));
     }
     for (bool standard : {false, true}) {
       Receiver explicit_profile;
